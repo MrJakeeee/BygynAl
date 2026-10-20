@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:bugunal;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  mail:
+    host: localhost
+app:
+  mail-from: test@gmail.com
+  frontend-origin: http://localhost:5173
+  bootstrap-email: ""
+  bootstrap-password: ""
+  resend-seconds: 0
