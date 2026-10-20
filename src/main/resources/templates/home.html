@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Забери сегодня')}"></head>
+<body><header th:replace="~{fragments :: header}"></header>
+<main class="page catalog-page">
+  <div class="location-bar"><span><img src="/assets/s0-imgContainer.svg" alt="">Бишкек, Кыргызстан</span><span class="badge green">● Только самовывоз</span></div>
+  <section class="hero">
+    <span class="badge green"><img src="/assets/s0-imgContainer1.svg" alt="">Осознанное потребление</span>
+    <h1>Вкусная еда со скидкой<br>— <em>забери сегодня</em></h1>
+    <p>Кафе и пекарни Бишкека продают оставшуюся к концу дня еду дешевле. Оплатите онлайн и заберите в удобное время.</p>
+    <div class="benefits"><span><img src="/assets/s0-imgContainer2.svg" alt="">Выгодные наборы</span><span><img src="/assets/s0-imgContainer3.svg" alt="">Местные заведения</span><span><img src="/assets/s0-imgContainer4.svg" alt="">Еда не пропадает</span></div>
+  </section>
+  <div class="notice" th:if="${demo}">Предпросмотр UI: примеры наборов из макета Figma. Покупка этих наборов недоступна.</div>
+  <form class="catalog-filters" method="get" action="/" role="search">
+    <div class="search-box"><img src="/assets/s0-imgContainer5.svg" alt=""><input name="q" aria-label="Поиск набора или заведения" placeholder="Поиск по названию набора, составу или заведению" th:value="${q}"><button type="button" data-clear-search aria-label="Очистить поиск"><img src="/assets/s0-imgContainer6.svg" alt=""></button></div>
+    <div class="category-tabs" aria-label="Тип заведения">
+      <label th:each="option : ${ {'','Пекарня','Кафе','Ресторан','Кондитерская'} }" th:classappend="${type == option ? 'active' : ''}"><input type="radio" name="type" th:value="${option}" th:checked="${type == option}"><span th:text="${option == '' ? 'Все' : option}"></span></label>
+    </div>
+    <div class="filter-row">
+      <label>Цена от<input type="number" min="0" name="min" th:value="${min}" placeholder="0" aria-label="Минимальная цена в сомах"></label>
+      <label>до<input type="number" min="0" name="max" th:value="${max}" placeholder="Любая" aria-label="Максимальная цена в сомах"><span>сом</span></label>
+      <label>Выдача до<input type="time" name="until" th:value="${until}"></label>
+      <label class="sort">Сортировка<select name="sort"><option value="time" th:selected="${sort == 'time'}">По началу выдачи</option><option value="price" th:selected="${sort == 'price'}">Сначала дешевле</option><option value="discount" th:selected="${sort == 'discount'}">По размеру скидки</option></select></label>
+      <button class="primary" type="submit">Показать</button><a href="/" class="text-link">Сбросить</a>
+    </div>
+  </form>
+  <div class="section-heading"><h2>Сегодня на витрине <span class="badge" th:text="${#lists.size(offers)} + ' наборов'"></span></h2><span>Бишкек</span></div>
+  <div class="offer-grid">
+    <article class="offer-card" th:each="offer : ${offers}">
+      <div class="offer-photo"><img th:src="@{'/assets/' + ${offer.image}}" th:alt="${offer.title}"><span class="discount" th:text="'−' + ${offer.discount()} + '%'"></span><span class="stock" th:classappend="${offer.remaining == 1 ? 'urgent' : ''}" th:text="'● Осталось ' + ${offer.remaining}"></span></div>
+      <div class="offer-body"><small class="place-name" th:text="${offer.place}"></small><h3 th:text="${offer.title}"></h3><p class="pickup"><img src="/assets/s0-imgContainer10.svg" alt=""><span th:text="'Сегодня ' + ${offer.start} + '–' + ${offer.end}"></span></p>
+        <div class="offer-bottom"><div><strong th:text="${offer.price} + ' сом'"></strong><del th:text="${offer.original} + ' сом'"></del></div><button class="primary" data-offer-details th:attr="data-title=${offer.title},data-composition=${offer.composition}">Подробнее <span>↗</span></button></div>
+      </div>
+    </article>
+  </div>
+  <section class="empty panel" th:if="${#lists.isEmpty(offers)}"><img src="/assets/s0-imgContainer25.svg" alt=""><h2 th:text="${q != '' or type != '' or min != null or max != null or until != '' ? 'Наборы не найдены' : 'Новые наборы скоро появятся'}"></h2><p>Попробуйте изменить фильтры или загляните позже.</p><a class="secondary" href="/">Сбросить фильтры</a></section>
+  <section class="community" id="how-it-works"><span class="community-icon"><img src="/assets/s0-imgContainer22.svg" alt=""></span><div><h2>Спасём еду вместе</h2><p>Выберите набор → оплатите онлайн → заберите в окно выдачи.<br>Каждый полученный набор поддерживает любимые заведения Бишкека.</p></div></section>
+  <section class="rules" id="rules"><h2>Удобно вам. Полезно городу.</h2><div class="rules-grid"><div><b>01</b><h3>Выберите набор</h3><p>Состав, цена и время самовывоза известны заранее.</p></div><div><b>02</b><h3>Оплатите за 3 минуты</h3><p>Порция закрепляется за вами на время оплаты.</p></div><div><b>03</b><h3>Заберите по коду</h3><p>Отмена с возвратом — до начала выдачи. За неполученный заказ деньги автоматически не возвращаются.</p></div></div></section>
+</main>
+<footer th:replace="~{fragments :: footer}"></footer><nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
+<dialog id="offer-dialog"><button class="dialog-close" data-close-dialog aria-label="Закрыть">×</button><span class="badge">Пример из Figma</span><h2 id="offer-title"></h2><p id="offer-composition"></p><p class="notice">Это демонстрационный набор. Бронирование и оплата будут доступны после подключения предложений и заказов.</p><button class="primary" data-close-dialog>Понятно</button></dialog>
+</body></html>

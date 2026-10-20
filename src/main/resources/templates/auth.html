@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Вход и регистрация')}"></head>
+<body><header th:replace="~{fragments :: header}"></header>
+<main class="page auth-layout"><section class="auth-story"><span class="badge green">Хорошая еда. Второй шанс.</span><h1>Сегодня вкусно.<br>Завтра —<br><em>меньше отходов.</em></h1><p>Любимые кафе и пекарни Бишкека.<br>Еда со скидкой и самовывозом.</p><div class="auth-benefit"><img src="/assets/s0-imgContainer22.svg" alt=""><span>Покупайте осознанно.<br>Поддерживайте местные заведения.</span></div></section><section id="content" class="panel auth-content" aria-live="polite" th:attr="data-auth-page=${authPage}"></section></main>
+<footer th:replace="~{fragments :: footer}"></footer><div th:replace="~{fragments :: toast}"></div><script type="module" src="/js/auth.js"></script></body></html>
