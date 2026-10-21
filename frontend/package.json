@@ -1,4 +1,4 @@
 {
   "name": "bugunal-frontend", "private": true, "version": "0.1.0", "type": "module",
-  "scripts": {"dev": "node server.mjs", "check": "node --check app.js && node --check server.mjs"}
+  "scripts": {"dev": "node server.mjs", "check": "node --check ../src/main/resources/static/js/site.js && node --check ../src/main/resources/static/js/auth.js && node --check server.mjs"}
 }

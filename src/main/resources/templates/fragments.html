@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title th:text="${title} + ' — BugunAL'">BugunAL</title>
+  <link rel="stylesheet" th:href="@{/css/site.css}"><script type="module" th:src="@{/js/site.js}"></script>
+</head>
+<body>
+<header class="site-header" th:fragment="header">
+  <div class="header-inner">
+    <a class="brand" th:href="@{/}" aria-label="BugunAL — главная">Bugun<span>AL</span></a>
+    <span class="city">Бишкек <span aria-hidden="true">⌄</span></span>
+    <nav class="desktop-nav" aria-label="Основная навигация">
+      <a th:href="@{/}">Каталог предложений</a><a th:href="@{/#how-it-works}">Как это работает</a>
+      <a th:if="${account != null and account.role == 'SELLER'}" th:href="@{/seller}">Кабинет заведения</a>
+      <a th:if="${account != null and account.role == 'ADMIN'}" th:href="@{/admin}">Управление</a>
+    </nav>
+    <a class="header-profile" th:href="${account == null ? '/login' : '/profile'}">
+      <span class="avatar small"><img src="/assets/s0-imgContainer24.svg" alt=""></span>
+      <span th:if="${account != null}"><b th:text="${account.name}"></b><small th:text="${roleName}"></small></span>
+      <b th:if="${account == null}">Войти</b>
+    </a>
+  </div>
+</header>
+<footer class="site-footer" th:fragment="footer">
+  <div><a class="brand" href="/">Bugun<span>AL</span></a><small>Кыргызстан, Бишкек<br>Меньше отходов. Больше хорошего.</small></div>
+  <nav aria-label="Информация"><a href="/#how-it-works">О сервисе</a><a href="/#rules">Правила самовывоза</a><a href="/login">Для заведений</a></nav>
+</footer>
+<div th:fragment="toast" id="toast" role="status" hidden></div>
+<nav class="mobile-nav" th:fragment="mobile" aria-label="Навигация на телефоне">
+  <a href="/"><img src="/assets/s0-imgContainer25.svg" alt="">Каталог</a>
+  <a th:if="${account != null and account.role == 'SELLER'}" href="/seller"><img src="/assets/s0-imgContainer27.svg" alt="">Заведение</a>
+  <a th:if="${account != null and account.role == 'ADMIN'}" href="/admin"><img src="/assets/s0-imgContainer27.svg" alt="">Управление</a>
+  <a href="/#how-it-works"><img src="/assets/s0-imgContainer22.svg" alt="">Как это работает</a>
+  <a th:href="${account == null ? '/login' : '/profile'}"><img src="/assets/s0-imgContainer29.svg" alt="">Профиль</a>
+</nav>
+<aside class="profile-sidebar" th:fragment="profileSidebar">
+  <section class="panel identity">
+    <div class="identity-heading"><span class="avatar" th:text="${#strings.substring(account.name,0,1)}">А</span><div><h3 th:text="${account.name}"></h3><small th:text="${account.phone}"></small><span class="badge green" th:text="${roleName}"></span></div></div>
+    <nav aria-label="Разделы профиля">
+      <a class="selected" href="#personal"><img src="/assets/s1-imgContainer3.svg" alt="">Личные данные <span>›</span></a>
+      <a href="#security">Смена пароля <span>↗</span></a>
+      <a href="#account-security">Безопасность <span>↗</span></a>
+      <a th:if="${account.role == 'SELLER' and !account.mustChangePassword}" href="/seller">Кабинет заведения <span>↗</span></a>
+      <a th:if="${account.role == 'ADMIN' and !account.mustChangePassword}" href="/admin">Панель администратора <span>↗</span></a>
+      <button class="logout" data-logout>Выйти из аккаунта <span>↗</span></button>
+    </nav>
+  </section>
+  <section class="panel impact" th:if="${account.role == 'USER'}"><h3>Ваш вклад</h3><p>Каждый полученный набор помогает еде найти своего покупателя.</p><div class="impact-grid"><div><b>—</b><small>получено заказов</small></div><div><b>—</b><small>сом сэкономлено</small></div></div><small>Статистика появится после подключения заказов.</small></section>
+</aside>
+</body></html>

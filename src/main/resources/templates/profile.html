@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Профиль и настройки')}"></head>
+<body><header th:replace="~{fragments :: header}"></header>
+<main class="page profile-page">
+  <div class="breadcrumbs"><a href="/">Главная</a><span>›</span>Личный кабинет<span>›</span><b>Профиль и настройки</b></div>
+  <div class="page-heading"><span class="badge green" th:text="${roleName}"></span><h1>Личный кабинет и настройки</h1><p>Управляйте персональными данными и безопасностью аккаунта</p></div>
+  <div class="notice" th:if="${account.mustChangePassword}">Перед продолжением смените временный пароль. Остальные разделы станут доступны после смены.</div>
+  <div class="profile-layout">
+    <aside th:replace="~{fragments :: profileSidebar}"></aside>
+    <div class="profile-panels">
+      <section class="panel" id="personal"><div class="panel-heading"><div><h2>Личные данные</h2><p>Основная информация и контактные данные</p></div><span class="badge">Аккаунт подтверждён</span></div>
+        <form data-profile-form><label for="name">Имя и фамилия <span class="required">*</span></label><input id="name" name="name" required maxlength="100" autocomplete="name" th:value="${account.name}"><small>Имя отображается сотруднику при получении заказа.</small>
+          <label for="email">Электронная почта <span class="field-note">Только чтение</span></label><input id="email" type="email" th:value="${account.email}" readonly><p class="info">Сменить e-mail можно в разделе «Безопасность», подтвердив текущий пароль и новый адрес.</p>
+          <label for="phone">Телефон <span class="required">*</span></label><input id="phone" name="phone" type="tel" required autocomplete="tel" maxlength="25" pattern="\+?[0-9 \x28\x29\x2d]{7,25}" th:value="${account.phone}"><small>Уведомления о заказах и код получения отправляются на e-mail.</small>
+          <div class="form-error" role="alert" hidden></div><div class="form-actions"><button class="primary" type="submit">Сохранить изменения</button><button type="reset" class="secondary">Отменить</button></div>
+        </form>
+      </section>
+      <section class="panel" id="security"><div class="panel-heading"><div><h2>Смена пароля</h2><p>Используйте надёжный пароль для защиты вашего аккаунта</p></div></div>
+        <form data-password-form><label for="currentPassword">Текущий пароль <span class="required">*</span></label><div class="password-input"><input id="currentPassword" name="currentPassword" type="password" required maxlength="72" autocomplete="current-password"><button type="button" data-toggle-password aria-label="Показать пароль" aria-pressed="false">◉</button></div>
+          <label for="newPassword">Новый пароль <span class="required">*</span></label><div class="password-input"><input id="newPassword" name="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password" pattern="(?=.*[A-Za-zА-Яа-я])(?=.*[0-9]).{8,}"><button type="button" data-toggle-password aria-label="Показать пароль" aria-pressed="false">◉</button></div>
+          <div class="password-meter"><span></span><span></span><span></span><span></span></div><small>Минимум 8 символов, буквы и цифры.</small>
+          <label for="confirmPassword">Повторите новый пароль <span class="required">*</span></label><div class="password-input"><input id="confirmPassword" type="password" required minlength="8" maxlength="72" autocomplete="new-password"><button type="button" data-toggle-password aria-label="Показать пароль" aria-pressed="false">◉</button></div>
+          <div class="form-error" role="alert" hidden></div><div class="form-actions"><button class="primary" type="submit">Обновить пароль</button><a href="/forgot">Забыли старый пароль?</a></div>
+        </form>
+      </section>
+      <section class="panel" id="account-security" th:unless="${account.mustChangePassword}"><div class="panel-heading"><div><h2>Безопасность аккаунта</h2><p>Подтверждение важных изменений кодом из письма</p></div></div>
+        <div class="settings-row"><div><b>Двухфакторная аутентификация</b><p th:text="${account.twoFactor ? 'Включена: вход с кодом из e-mail' : 'Дополнительная защита входа кодом из e-mail'}"></p></div><button class="secondary" data-account-action="factor" th:attr="data-enabled=${!account.twoFactor}" th:text="${account.twoFactor ? 'Отключить' : 'Включить'}"></button></div>
+        <div class="settings-row"><div><b>Электронная почта</b><p th:text="${account.email}"></p></div><button class="secondary" data-account-action="email">Изменить</button></div>
+      </section>
+    </div>
+  </div>
+</main><footer th:replace="~{fragments :: footer}"></footer><nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
+<dialog id="account-dialog"><button class="dialog-close" data-close-dialog aria-label="Закрыть">×</button><h2 id="account-dialog-title"></h2><form id="account-dialog-form"><div id="account-dialog-fields"></div><div class="form-error" role="alert" hidden></div><button class="primary" type="submit">Получить код</button></form></dialog>
+</body></html>

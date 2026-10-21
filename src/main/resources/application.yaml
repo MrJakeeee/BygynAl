@@ -30,6 +30,7 @@ server:
         same-site: lax
         secure: ${COOKIE_SECURE:false}
 app:
+  ui-demo: ${UI_DEMO:false}
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   mail-from: ${SMTP_USERNAME}
   bootstrap-email: ${ADMIN_EMAIL:}
