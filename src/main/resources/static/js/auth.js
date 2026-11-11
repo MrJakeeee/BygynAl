@@ -25,11 +25,22 @@ function render(page='login'){
   else if(page==='profile'&&user){location.href=user.mustChangePassword?'/profile':user.role==='SELLER'?'/seller':user.role==='ADMIN'?'/admin':'/profile';return;}
   else html=`<span class="step">РАДЫ ВАС ВИДЕТЬ</span><h2>С возвращением</h2><p class="subtitle">Войдите, чтобы забрать что-то вкусное сегодня.</p>${form(emailField()+passwordField()+'<button type="button" class="text-button forgot" data-page="forgot">Забыли пароль?</button>','Войти')}<div class="form-footer">Ещё нет аккаунта? <button class="text-button" data-page="register">Зарегистрироваться</button></div><div class="panel"><p class="hint">Единый вход для покупателей, сотрудников заведений и администратора.</p></div>`;
   content.innerHTML=html;
+  if(page==='register'){
+    content.querySelector('.hint').insertAdjacentHTML('beforebegin','<div class="seller-fields" hidden>'+field('establishmentName','Название заведения','text','maxlength="160" autocomplete="organization"')+field('establishmentAddress','Адрес заведения','text','maxlength="300" autocomplete="street-address"')+'</div>');
+    content.insertAdjacentHTML('afterbegin','<fieldset class="role-choice"><legend>Кто вы?</legend><label><input type="radio" name="registrationRole" value="USER" checked>Покупатель</label><label><input type="radio" name="registrationRole" value="SELLER">Продавец</label></fieldset>');
+    content.querySelectorAll('[name="registrationRole"]').forEach(input=>input.addEventListener('change',()=>{
+      const seller=input.value==='SELLER';
+      content.querySelector('.seller-fields').hidden=!seller;
+      content.querySelectorAll('.seller-fields input').forEach(field=>field.required=seller);
+      content.querySelector('.subtitle').textContent=seller?'Укажите данные заведения. После подтверждения Gmail создадим аккаунт продавца и новое заведение.':'Зарегистрируйтесь как покупатель и подтвердите Gmail, чтобы завершить регистрацию.';
+      content.querySelector('.hint').textContent=seller?'Название и адрес будут сохранены в профиле нового заведения.':'Пароль: не менее 8 символов, буквы и цифры.';
+    }));
+  }
   content.querySelector('form')?.addEventListener('submit',event=>submitForm(event,page));
 }
 async function busy(form,fn){const button=form.querySelector('[type=submit]');const err=form.querySelector('#error');button.disabled=true;err.hidden=true;try{await fn();}catch(e){err.textContent=e.message;err.hidden=false;}finally{button.disabled=false;}}
 async function submitForm(event,page){event.preventDefault();const formEl=event.target;const data=Object.fromEntries(new FormData(formEl));await busy(formEl,async()=>{
-  if(page==='register'){const r=await api('/auth/register','POST',data);pending={...r,type:'register',request:data};render('verify');}
+  if(page==='register'){data.role=content.querySelector('[name="registrationRole"]:checked').value;const r=await api('/auth/register','POST',data);pending={...r,type:'register',request:data};render('verify');}
   else if(page==='forgot'){const r=await api('/auth/password/forgot','POST',data);pending={...r,type:'reset',request:data};render('verify');}
   else if(page==='verify')await verify(data);
   else {const r=await api('/auth/login','POST',data);if(r.twoFactorRequired){pending={...r.challenge,type:'login',request:data};render('verify');}else{user=r;csrf=null;activeTab='profile';render('profile');}}

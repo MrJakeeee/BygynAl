@@ -24,7 +24,7 @@ public class AdminController {
     }
     @GetMapping("/establishments") Object establishments() { return jdbc.queryForList("select * from establishments order by name limit 100"); }
     @PostMapping("/establishments") Object establishment(Authentication a,@Valid @RequestBody Requests.Establishment r) {
-        UUID id=UUID.randomUUID(); jdbc.update("insert into establishments values (?, ?, ?)",id,r.name().trim(),r.address().trim());
+        UUID id=UUID.randomUUID(); jdbc.update("insert into establishments (id,name,address) values (?, ?, ?)",id,r.name().trim(),r.address().trim());
         audit(a,"CREATE_ESTABLISHMENT",id); return Map.of("id",id,"message","Заведение создано");
     }
     @PostMapping("/sellers") Object seller(Authentication a,@Valid @RequestBody Requests.Seller r) {

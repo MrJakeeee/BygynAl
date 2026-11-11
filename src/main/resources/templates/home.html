@@ -34,7 +34,6 @@
     </article>
   </div>
   <section class="empty panel" th:if="${#lists.isEmpty(offers)}"><img src="/assets/s0-imgContainer25.svg" alt=""><h2 th:text="${q != '' or type != '' or min != null or max != null or until != '' ? 'Наборы не найдены' : 'Новые наборы скоро появятся'}"></h2><p>Попробуйте изменить фильтры или загляните позже.</p><a class="secondary" href="/">Сбросить фильтры</a></section>
-  <section class="community" id="how-it-works"><span class="community-icon"><img src="/assets/s0-imgContainer22.svg" alt=""></span><div><h2>Спасём еду вместе</h2><p>Выберите набор → оплатите онлайн → заберите в окно выдачи.<br>Каждый полученный набор поддерживает любимые заведения Бишкека.</p></div></section>
   <section class="rules" id="rules"><h2>Удобно вам. Полезно городу.</h2><div class="rules-grid"><div><b>01</b><h3>Выберите набор</h3><p>Состав, цена и время самовывоза известны заранее.</p></div><div><b>02</b><h3>Оплатите за 3 минуты</h3><p>Порция закрепляется за вами на время оплаты.</p></div><div><b>03</b><h3>Заберите по коду</h3><p>Отмена с возвратом — до начала выдачи. За неполученный заказ деньги автоматически не возвращаются.</p></div></div></section>
 </main>
 <footer th:replace="~{fragments :: footer}"></footer><nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>

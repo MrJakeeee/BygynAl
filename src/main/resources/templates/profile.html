@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Профиль и настройки')}"></head>
-<body><header th:replace="~{fragments :: header}"></header>
-<main class="page profile-page">
+<body th:classappend="${adminShell} ? 'admin-body admin-shell'">
+<aside th:if="${adminShell}" th:replace="~{fragments :: adminSidebar}"></aside><header th:if="${adminShell}" th:replace="~{fragments :: adminTop}"></header><header th:unless="${adminShell}" th:replace="~{fragments :: header}"></header>
+<main th:class="${adminShell} ? 'admin-content profile-page' : 'page profile-page'">
   <div class="breadcrumbs"><a href="/">Главная</a><span>›</span>Личный кабинет<span>›</span><b>Профиль и настройки</b></div>
   <div class="page-heading"><span class="badge green" th:text="${roleName}"></span><h1>Личный кабинет и настройки</h1><p>Управляйте персональными данными и безопасностью аккаунта</p></div>
   <div class="notice" th:if="${account.mustChangePassword}">Перед продолжением смените временный пароль. Остальные разделы станут доступны после смены.</div>
-  <div class="profile-layout">
-    <aside th:replace="~{fragments :: profileSidebar}"></aside>
+  <div class="profile-layout" th:classappend="${adminShell} ? 'profile-layout--admin' : 'profile-layout--top'">
+    <aside th:unless="${adminShell}" th:replace="~{fragments :: profileSidebar}"></aside>
     <div class="profile-panels">
       <section class="panel" id="personal"><div class="panel-heading"><div><h2>Личные данные</h2><p>Основная информация и контактные данные</p></div><span class="badge">Аккаунт подтверждён</span></div>
         <form data-profile-form><label for="name">Имя и фамилия <span class="required">*</span></label><input id="name" name="name" required maxlength="100" autocomplete="name" th:value="${account.name}"><small>Имя отображается сотруднику при получении заказа.</small>
@@ -30,6 +31,6 @@
       </section>
     </div>
   </div>
-</main><footer th:replace="~{fragments :: footer}"></footer><nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
+</main><footer th:replace="~{fragments :: footer}"></footer><nav th:unless="${adminShell}" th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
 <dialog id="account-dialog"><button class="dialog-close" data-close-dialog aria-label="Закрыть">×</button><h2 id="account-dialog-title"></h2><form id="account-dialog-form"><div id="account-dialog-fields"></div><div class="form-error" role="alert" hidden></div><button class="primary" type="submit">Получить код</button></form></dialog>
 </body></html>
