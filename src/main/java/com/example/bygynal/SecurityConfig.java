@@ -22,7 +22,7 @@ public class SecurityConfig {
     @Bean SecurityFilterChain security(HttpSecurity http,Users users,SecurityContextRepository repo) throws Exception {
         return http.cors(c->{}).securityContext(c->c.securityContextRepository(repo))
             .authorizeHttpRequests(a->a
-                .requestMatchers("/", "/catalog", "/login", "/register", "/forgot", "/assets/**", "/css/**", "/js/**", "/api/auth/**", "/error").permitAll()
+                .requestMatchers("/", "/catalog", "/login", "/register", "/forgot", "/assets/**", "/css/**", "/js/**", "/api/auth/**", "/api/catalog", "/api/catalog/**", "/error").permitAll()
                 .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
                 .requestMatchers("/seller", "/seller/**").hasRole("SELLER")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -42,7 +42,7 @@ public class SecurityConfig {
                             SecurityContextHolder.clearContext(); json(res,401,"Сессия завершена. Войдите заново"); return;
                         }
                         String path=req.getRequestURI();
-                        if(u.mustChangePassword && !Set.of("/profile","/api/profile","/api/profile/password","/api/auth/csrf","/api/logout").contains(path) && !path.startsWith("/css/") && !path.startsWith("/js/") && !path.startsWith("/assets/")) {
+                        if(u.mustChangePassword && !Set.of("/profile","/api/profile","/api/profile/password","/api/auth/csrf","/api/catalog","/api/catalog/types","/api/logout").contains(path) && !path.startsWith("/api/catalog/") && !path.startsWith("/css/") && !path.startsWith("/js/") && !path.startsWith("/assets/")) {
                             if(!path.startsWith("/api/")){res.sendRedirect("/profile"); return;}
                             json(res,403,"Сначала смените временный пароль"); return;
                         }
