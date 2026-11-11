@@ -5,7 +5,8 @@ public class Requests {
     public record Register(@NotBlank @Size(max=100) String name,
         @NotBlank @Email @Size(max=254) String email,
         @NotBlank @Pattern(regexp="\\+?[0-9 ()-]{7,25}",message="Укажите корректный телефон") String phone,
-        @NotBlank @Size(min=8,max=72) @Pattern(regexp="(?s)(?=.*\\p{L})(?=.*[0-9]).*",message="Нужны буквы и цифры") String password) {}
+        @NotBlank @Size(min=8,max=72) @Pattern(regexp="(?s)(?=.*\\p{L})(?=.*[0-9]).*",message="Нужны буквы и цифры") String password,
+        String role, @Size(max=160) String establishmentName, @Size(max=300) String establishmentAddress) {}
     public record Login(@NotBlank @Email @Size(max=254) String email, @NotBlank @Size(max=72) String password) {}
     public record EmailRequest(@NotBlank @Email @Size(max=254) String email) {}
     public record Verify(@NotNull UUID challengeId, @NotBlank @Pattern(regexp="[0-9]{6}") String code) {}

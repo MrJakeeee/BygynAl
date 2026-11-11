@@ -19,12 +19,18 @@ public class PageController {
         this.auth=auth; this.jdbc=jdbc; this.demo=demo;
     }
     @ModelAttribute
-    void shell(Model model, Authentication authentication) {
+    void shell(Model model, Authentication authentication, jakarta.servlet.http.HttpServletRequest request) {
         UserAccount account=authentication!=null && authentication.getPrincipal() instanceof SecurityConfig.Principal p ? auth.user(p.id()) : null;
         model.addAttribute("account", account);
         model.addAttribute("roleName", account==null ? "Гость" : switch(account.role) {case "SELLER" -> "Сотрудник заведения"; case "ADMIN" -> "Администратор"; default -> "Покупатель";});
         model.addAttribute("today", LocalDate.now(ZoneId.of("Asia/Bishkek")));
         model.addAttribute("demo", demo);
+        boolean admin = account != null && "ADMIN".equals(account.role);
+        model.addAttribute("adminShell", admin);
+        if (admin) {
+            String path = request.getRequestURI();
+            model.addAttribute("adminSection", path.equals("/profile") ? "profile" : path.equals("/admin") ? "users" : "catalog");
+        }
     }
     @GetMapping({"/", "/catalog"})
     String home(Model model, @RequestParam(defaultValue="") String q, @RequestParam(defaultValue="") String type,

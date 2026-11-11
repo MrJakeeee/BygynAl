@@ -11,7 +11,7 @@
     <a class="brand" th:href="@{/}" aria-label="BugunAL — главная">Bugun<span>AL</span></a>
     <span class="city">Бишкек <span aria-hidden="true">⌄</span></span>
     <nav class="desktop-nav" aria-label="Основная навигация">
-      <a th:href="@{/}">Каталог предложений</a><a th:href="@{/#how-it-works}">Как это работает</a>
+      <a th:href="@{/}">Каталог предложений</a>
       <a th:if="${account != null and account.role == 'SELLER'}" th:href="@{/seller}">Кабинет заведения</a>
       <a th:if="${account != null and account.role == 'ADMIN'}" th:href="@{/admin}">Управление</a>
     </nav>
@@ -24,14 +24,27 @@
 </header>
 <footer class="site-footer" th:fragment="footer">
   <div><a class="brand" href="/">Bugun<span>AL</span></a><small>Кыргызстан, Бишкек<br>Меньше отходов. Больше хорошего.</small></div>
-  <nav aria-label="Информация"><a href="/#how-it-works">О сервисе</a><a href="/#rules">Правила самовывоза</a><a href="/login">Для заведений</a></nav>
+  <nav aria-label="Информация"><a href="/#rules">Правила самовывоза</a><a href="/login">Для заведений</a></nav>
 </footer>
 <div th:fragment="toast" id="toast" role="status" hidden></div>
+<aside class="admin-sidebar" th:fragment="adminSidebar">
+  <a class="brand" href="/admin">Bugun<span>AL</span></a><span class="admin-region">BISHKEK</span>
+  <nav aria-label="Администрирование">
+    <a th:classappend="${adminSection == 'users'} ? 'selected'" href="/admin">▦ <span>Пользователи</span></a>
+    <a th:classappend="${adminSection == 'users'} ? 'selected'" href="/admin#establishments">▤ <span>Заведения</span></a>
+    <a th:classappend="${adminSection == 'profile'} ? 'selected'" href="/profile">○ <span>Мой профиль</span></a>
+    <a th:classappend="${adminSection == 'catalog'} ? 'selected'" href="/">↗ <span>Каталог предложений</span></a>
+  </nav>
+  <div class="admin-identity"><span class="avatar" th:text="${account == null ? '' : #strings.substring(account.name,0,1)}"></span><div><b th:text="${account == null ? '' : account.name}"></b><small>Администратор · Бишкек</small></div></div>
+  <button data-logout>Выйти ↗</button>
+</aside>
+<header class="admin-top" th:fragment="adminTop">
+  <span>Управление сервисом</span><div><span>Бишкек (UTC+6)</span><a href="/">Приложение покупателя ↗</a><a class="avatar small" href="/profile" aria-label="Мой профиль"><img src="/assets/s0-imgContainer24.svg" alt=""></a></div>
+</header>
 <nav class="mobile-nav" th:fragment="mobile" aria-label="Навигация на телефоне">
   <a href="/"><img src="/assets/s0-imgContainer25.svg" alt="">Каталог</a>
   <a th:if="${account != null and account.role == 'SELLER'}" href="/seller"><img src="/assets/s0-imgContainer27.svg" alt="">Заведение</a>
   <a th:if="${account != null and account.role == 'ADMIN'}" href="/admin"><img src="/assets/s0-imgContainer27.svg" alt="">Управление</a>
-  <a href="/#how-it-works"><img src="/assets/s0-imgContainer22.svg" alt="">Как это работает</a>
   <a th:href="${account == null ? '/login' : '/profile'}"><img src="/assets/s0-imgContainer29.svg" alt="">Профиль</a>
 </nav>
 <aside class="profile-sidebar" th:fragment="profileSidebar">

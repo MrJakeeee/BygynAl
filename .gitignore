@@ -36,3 +36,4 @@ frontend/node_modules/
 frontend/dist/
 .verify/
 pom.verify.xml
+.agents/

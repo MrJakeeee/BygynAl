@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -14,7 +15,7 @@ import java.util.*;
 @Service
 @Transactional(noRollbackFor=ApiError.class)
 public class AuthService {
-    final Users users; final Challenges challenges; final PasswordEncoder encoder; final JavaMailSender mail;
+    final Users users; final Challenges challenges; final PasswordEncoder encoder; final JavaMailSender mail; final JdbcTemplate jdbc;
     private final SecureRandom random = new SecureRandom();
     @Value("${app.mail-from}") String from;
     @Value("${app.code-ttl-minutes:10}") int codeMinutes;
@@ -23,8 +24,8 @@ public class AuthService {
     @Value("${app.resend-seconds:60}") int resendSeconds;
     @Value("${app.login-max-attempts:5}") int maxLoginAttempts;
     @Value("${app.lock-minutes:15}") int lockMinutes;
-    public AuthService(Users users, Challenges challenges, PasswordEncoder encoder, JavaMailSender mail) {
-        this.users=users; this.challenges=challenges; this.encoder=encoder; this.mail=mail;
+    public AuthService(Users users, Challenges challenges, PasswordEncoder encoder, JavaMailSender mail, JdbcTemplate jdbc) {
+        this.users=users; this.challenges=challenges; this.encoder=encoder; this.mail=mail; this.jdbc=jdbc;
     }
     static String email(String value) {
         String result=value.trim().toLowerCase(Locale.ROOT);
@@ -70,15 +71,29 @@ public class AuthService {
     public Map<String,Object> register(Requests.Register r) {
         String email=email(r.email());
         if(users.findByEmail(email).isPresent()) throw new ApiError(409,"Этот e-mail уже зарегистрирован");
+        String role=r.role()==null||r.role().isBlank()?"USER":r.role();
+        if(!Set.of("USER","SELLER").contains(role)) throw new ApiError(400,"Выберите покупателя или продавца");
+        String establishmentName=null, establishmentAddress=null;
+        if("SELLER".equals(role)) {
+            if(r.establishmentName()==null||r.establishmentName().isBlank()||r.establishmentAddress()==null||r.establishmentAddress().isBlank())
+                throw new ApiError(400,"Укажите название и адрес заведения");
+            establishmentName=r.establishmentName().trim(); establishmentAddress=r.establishmentAddress().trim();
+        }
         String hash=hashPassword(r.password());
         Challenge c=issue(email,"REGISTER",codeMinutes);
         c.name=r.name().trim(); c.phone=r.phone().trim(); c.passwordHash=hash;
+        c.registrationRole=role; c.establishmentName=establishmentName; c.establishmentAddress=establishmentAddress;
         return challengeResponse(c);
     }
     public void confirmRegistration(Requests.Verify r) {
         Challenge c=verify(r.challengeId(),r.code(),"REGISTER");
         if(users.findByEmail(c.email).isPresent()) throw new ApiError(409,"Этот e-mail уже зарегистрирован");
         UserAccount u=new UserAccount(); u.email=c.email; u.name=c.name; u.phone=c.phone; u.passwordHash=c.passwordHash;
+        if("SELLER".equals(c.registrationRole)) {
+            UUID establishmentId=UUID.randomUUID();
+            jdbc.update("insert into establishments (id,name,address) values (?,?,?)",establishmentId,c.establishmentName,c.establishmentAddress);
+            u.role="SELLER"; u.establishmentId=establishmentId;
+        }
         users.saveAndFlush(u);
     }
     void allowed(UserAccount u) {

@@ -17,7 +17,7 @@ document.querySelector('[data-password-form]')?.addEventListener('submit',e=>{
 });
 document.querySelector('#newPassword')?.addEventListener('input',e=>{const value=e.target.value;const score=(value.length>=8?1:0)+(/[a-zа-я]/i.test(value)&&/\d/.test(value)?1:0)+(/[A-ZА-Я]/.test(value)?1:0)+(/[^\p{L}\p{N}]/u.test(value)&&value.length>=12?1:0);document.querySelectorAll('.password-meter span').forEach((s,i)=>s.classList.toggle('filled',i<score));});
 document.querySelectorAll('[data-toggle-password]').forEach(b=>b.addEventListener('click',()=>{const input=b.previousElementSibling;const show=input.type==='password';input.type=show?'text':'password';b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Скрыть пароль':'Показать пароль');}));
-document.querySelectorAll('[data-logout]').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;try{await api('/logout','POST');location.href='/';}catch(e){toast(e.message);b.disabled=false;}}));
+document.querySelectorAll('[data-logout]').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;try{await api('/logout','POST');location.replace('/login');}catch(e){toast(e.message);b.disabled=false;}}));
 document.querySelectorAll('[data-close-dialog]').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
 document.querySelectorAll('.category-tabs input').forEach(input=>input.addEventListener('change',()=>input.form.requestSubmit()));

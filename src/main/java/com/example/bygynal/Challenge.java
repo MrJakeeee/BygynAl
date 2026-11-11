@@ -13,4 +13,7 @@ public class Challenge {
     public boolean consumed;
     @Column(length=100) public String name, passwordHash;
     @Column(length=25) public String phone;
+    @Column(length=20) public String registrationRole;
+    @Column(length=160) public String establishmentName;
+    @Column(length=300) public String establishmentAddress;
 }
