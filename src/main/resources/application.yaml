@@ -23,6 +23,10 @@ spring:
       mail.smtp.connectiontimeout: 5000
       mail.smtp.timeout: 5000
       mail.smtp.writetimeout: 5000
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 16MB
 server:
   servlet:
     session:

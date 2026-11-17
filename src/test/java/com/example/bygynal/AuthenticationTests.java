@@ -43,7 +43,7 @@ class AuthenticationTests {
     }
     UserAccount seed(String role) {
         UserAccount u=new UserAccount();u.email=email;u.name="Айжан";u.phone="+996700123456";u.passwordHash=encoder.encode(password);u.role=role;
-        if(role.equals("SELLER")){u.establishmentId=UUID.randomUUID();jdbc.update("insert into establishments values (?, ?, ?)",u.establishmentId,"Кафе","Бишкек");}
+        if(role.equals("SELLER")){u.establishmentId=UUID.randomUUID();jdbc.update("insert into establishments (id, name, address) values (?, ?, ?)",u.establishmentId,"Кафе","Бишкек");}
         return users.saveAndFlush(u);
     }
     MockHttpSession login() throws Exception {

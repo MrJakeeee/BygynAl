@@ -1,5 +1,7 @@
 -- Create the requested BugunAL schema after the old local application tables
 -- have been removed manually. Flyway migration history is intentionally kept.
+-- On a fresh database V1 has already created these tables, so drop them first.
+DROP TABLE IF EXISTS admin_audit, auth_challenges, app_users, establishments CASCADE;
 
 CREATE TABLE images (
     id uuid PRIMARY KEY,

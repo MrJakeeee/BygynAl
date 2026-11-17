@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${offer == null ? 'Новое предложение' : 'Изменение предложения'})}"></head>
+<body><header th:replace="~{fragments :: header}"></header>
+<main class="page seller-page" th:with="locked=${offer != null and offer.priceAndTimeLocked()}">
+  <div class="breadcrumbs"><a href="/">Главная</a><span>›</span><a href="/seller">Кабинет заведения</a><span>›</span><b th:text="${offer == null ? 'Новое предложение' : 'Изменение предложения'}"></b></div>
+  <div class="page-heading"><span class="badge green" th:text="${offer == null ? 'Создание набора' : 'Статус: ' + offer.status.title}"></span>
+    <h1 th:text="${offer == null ? 'Новое предложение' : offer.title}"></h1>
+    <p>Предложение появится на витрине сразу после публикации. Состав набора покупатель видит заранее.</p></div>
+  <div class="notice" th:if="${locked}" th:text="'Уже продано порций: ' + ${offer.sold()} + '. Цену и время выдачи изменить нельзя; количество порций можно только увеличить или уменьшить не ниже проданного.'"></div>
+  <form class="seller-form" data-offer-form th:attr="data-offer-id=${offer == null ? '' : offer.id}" enctype="multipart/form-data">
+    <div class="form-columns">
+      <div>
+        <section class="panel">
+          <div class="panel-heading"><div><h2>1. Набор</h2><p>Название, состав и фото</p></div></div>
+          <label for="title">Название набора <span class="required">*</span></label><input id="title" name="title" required maxlength="120" placeholder="Набор выпечки на вечер" th:value="${offer?.title}">
+          <label for="composition">Состав набора <span class="required">*</span></label><textarea id="composition" name="composition" required maxlength="1000" rows="4" placeholder="2 самсы с мясом, 3 булочки с изюмом, 1 лепёшка" th:text="${offer?.composition}"></textarea><small>Перечислите точно, что входит в набор.</small>
+          <label for="allergens">Аллергены</label><input id="allergens" name="allergens" maxlength="300" placeholder="Глютен, молоко, кунжут" th:value="${offer?.allergens}">
+          <label for="photos">Фото набора <span class="required" th:if="${offer == null}">*</span></label><input id="photos" name="photos" type="file" accept="image/jpeg,image/png" multiple th:required="${offer == null}">
+          <small th:text="${offer == null ? 'До 3 фото, JPG или PNG, каждое не больше 5 МБ.' : 'Выберите новые фото, чтобы заменить текущие. До 3 фото, JPG или PNG, до 5 МБ.'}"></small>
+          <div class="photo-list" th:if="${offer != null}"><img th:each="p : ${offer.photoIds}" th:src="@{'/api/seller/images/' + ${p}}" alt="Фото набора"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-heading"><div><h2>2. Цена</h2><p>Цена со скидкой должна быть ниже исходной</p></div><span class="badge peach" id="discount-badge">Скидка —</span></div>
+          <div class="two-fields">
+            <div><label for="originalPrice">Исходная цена, сом <span class="required">*</span></label><input id="originalPrice" name="originalPrice" required inputmode="decimal" placeholder="500" th:value="${offer?.originalPrice}" th:readonly="${locked}"></div>
+            <div><label for="price">Цена со скидкой, сом <span class="required">*</span></label><input id="price" name="price" required inputmode="decimal" placeholder="250" th:value="${offer?.price}" th:readonly="${locked}"></div>
+          </div>
+        </section>
+      </div>
+      <div>
+        <section class="panel">
+          <div class="panel-heading"><div><h2>3. Порции</h2><p>Один заказ — одна порция</p></div></div>
+          <label for="portions">Количество порций <span class="required">*</span></label><input id="portions" name="portions" type="number" required max="100" th:attr="min=${locked ? offer.sold() : 1}" th:value="${offer != null ? offer.totalPortions : 5}">
+          <small th:if="${offer != null}" th:text="'Продано: ' + ${offer.sold()} + ', осталось: ' + ${offer.remaining}"></small>
+        </section>
+        <section class="panel">
+          <div class="panel-heading"><div><h2>4. Окно выдачи</h2><p>Бишкек (UTC+6), от 30 минут до 4 часов</p></div></div>
+          <label for="pickupDate">Дата выдачи <span class="required">*</span></label><input id="pickupDate" name="pickupDate" type="date" required th:value="${offer != null ? offer.pickupDate : today}" th:readonly="${locked}">
+          <div class="two-fields">
+            <div><label for="pickupStart">Начало <span class="required">*</span></label><input id="pickupStart" name="pickupStart" type="time" required th:value="${offer != null ? #temporals.format(offer.pickupStart, 'HH:mm') : '19:00'}" th:readonly="${locked}"></div>
+            <div><label for="pickupEnd">Конец <span class="required">*</span></label><input id="pickupEnd" name="pickupEnd" type="time" required th:value="${offer != null ? #temporals.format(offer.pickupEnd, 'HH:mm') : '21:00'}" th:readonly="${locked}"></div>
+          </div>
+          <p class="info">Начало выдачи — не раньше чем через 30 минут после публикации.</p>
+        </section>
+      </div>
+    </div>
+    <div class="form-error" role="alert" hidden></div>
+    <div class="form-actions"><button class="primary" type="submit" th:text="${offer == null ? 'Опубликовать предложение' : 'Сохранить изменения'}"></button><a class="secondary" href="/seller">Отмена</a></div>
+  </form>
+</main><footer th:replace="~{fragments :: footer}"></footer><nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
+<script type="module" th:src="@{/js/seller.js}"></script>
+</body></html>
