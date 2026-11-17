@@ -15,8 +15,10 @@ public class PageController {
     private final AuthService auth;
     private final JdbcTemplate jdbc;
     private final CatalogService catalog;
-    public PageController(AuthService auth, JdbcTemplate jdbc, CatalogService catalog) {
-        this.auth=auth; this.jdbc=jdbc; this.catalog=catalog;
+    private final Establishments establishments;
+    private final Offers offers;
+    public PageController(AuthService auth, JdbcTemplate jdbc, CatalogService catalog, Establishments establishments, Offers offers) {
+        this.auth=auth; this.jdbc=jdbc; this.catalog=catalog; this.establishments=establishments; this.offers=offers;
     }
     @ModelAttribute
     void shell(Model model, Authentication authentication, jakarta.servlet.http.HttpServletRequest request) {
@@ -49,11 +51,28 @@ public class PageController {
         model.addAttribute("authPage", request.getRequestURI().substring(1)); return "auth";
     }
     @GetMapping("/profile") String profile() {return "profile";}
+    // ---------- Кабинет сотрудника заведения (ТЗ 4.3, 4.4) ----------
+    private UUID placeId(Authentication authentication) {return auth.user(AuthController.id(authentication)).establishmentId;}
     @GetMapping("/seller") String seller(Model model, Authentication authentication) {
-        var u=auth.user(AuthController.id(authentication));
-        var places=jdbc.queryForList("select id, name, address from establishments where id = ?",u.establishmentId);
-        model.addAttribute("place",places.isEmpty()?null:places.get(0));
+        UUID placeId=placeId(authentication);
+        var list=placeId==null ? List.<Offers.View>of() : offers.forEstablishment(placeId);
+        model.addAttribute("place",placeId==null ? null : establishments.find(placeId).orElse(null));
+        model.addAttribute("offers",list);
+        model.addAttribute("activeCount",list.stream().filter(o->o.status()==Offers.Status.ACTIVE).count());
+        model.addAttribute("soldCount",list.stream().mapToInt(Offers.View::sold).sum());
         return "seller";
+    }
+    @GetMapping("/seller/establishment") String establishment(Model model, Authentication authentication) {
+        UUID placeId=placeId(authentication);
+        model.addAttribute("place",placeId==null ? null : establishments.find(placeId).orElse(null));
+        model.addAttribute("types",Establishments.TYPES);
+        return "seller-establishment";
+    }
+    @GetMapping("/seller/offers/new") String newOffer(Model model) {model.addAttribute("offer",null); return "seller-offer";}
+    @GetMapping("/seller/offers/{id}") String editOffer(Model model, Authentication authentication, @PathVariable UUID id) {
+        try {model.addAttribute("offer",offers.get(placeId(authentication),id));}
+        catch(ApiError e) {throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);}
+        return "seller-offer";
     }
     @GetMapping("/admin") String admin(Model model, @RequestParam(defaultValue="") String q,
         @RequestParam(defaultValue="") String role, @RequestParam(defaultValue="") String state) {

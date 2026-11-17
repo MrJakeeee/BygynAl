@@ -18,17 +18,30 @@ import static org.hamcrest.Matchers.*;
 class PageTests {
     @Autowired MockMvc mvc; @Autowired Users users; @Autowired Challenges challenges; @Autowired JdbcTemplate jdbc;
     @BeforeEach void clear() {
+        jdbc.update("delete from offer_photos"); jdbc.update("delete from offers");
         jdbc.update("delete from admin_audit"); challenges.deleteAll(); users.deleteAll(); jdbc.update("delete from establishments");
+    }
+    /** Каталог читает предложения из базы, поэтому для проверки витрины кладём два набора на сегодня. */
+    void seedCatalog() {
+        var today=java.sql.Date.valueOf(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Bishkek")));
+        String place="insert into establishments (id, name, address, place_type) values (?,?,?,?)";
+        String offer="insert into offers (id, establishment_id, title, composition, original_price, price, total_portions, remaining, pickup_date, pickup_start, pickup_end) values (?,?,?,?,?,?,5,5,?,?,?)";
+        UUID bakery=UUID.randomUUID(), cafe=UUID.randomUUID();
+        jdbc.update(place,bakery,"Пекарня «Тандыр»","ул. Киевская, 95","Пекарня");
+        jdbc.update(place,cafe,"Кафе «Навват»","пр. Чуй, 120","Кафе");
+        jdbc.update(offer,UUID.randomUUID(),bakery,"Набор свежей выпечки на вечер","3 булочки, 2 лепёшки",500,250,today,"19:00","21:00");
+        jdbc.update(offer,UUID.randomUUID(),cafe,"Горячий вечерний сет","2 самсы, плов, салат",480,240,today,"20:00","22:00");
     }
     UserAccount account(String role) {
         var u=new UserAccount(); u.name="Айбек <script>"; u.email=role.toLowerCase()+"@gmail.com"; u.phone="+996700123456";u.passwordHash="PRIVATE_HASH";u.role=role;
-        if(role.equals("SELLER")) {u.establishmentId=UUID.randomUUID();jdbc.update("insert into establishments values (?,?,?)",u.establishmentId,"Пекарня «Тандыр»","ул. Киевская, 95");}
+        if(role.equals("SELLER")) {u.establishmentId=UUID.randomUUID();jdbc.update("insert into establishments (id, name, address) values (?,?,?)",u.establishmentId,"Пекарня «Тандыр»","ул. Киевская, 95");}
         return users.saveAndFlush(u);
     }
     org.springframework.test.web.servlet.request.RequestPostProcessor as(UserAccount u) {
         return authentication(new UsernamePasswordAuthenticationToken(new SecurityConfig.Principal(u.id,u.sessionVersion),null,List.of(new SimpleGrantedAuthority("ROLE_"+u.role))));
     }
     @Test void publicCatalogRendersLocalAssetsAndFiltersOnServer() throws Exception {
+        seedCatalog();
         mvc.perform(get("/")).andExpect(status().isOk()).andExpect(view().name("home"))
             .andExpect(content().string(containsString("Набор свежей выпечки на вечер")))
             .andExpect(content().string(containsString("/assets/s0-img.png")))

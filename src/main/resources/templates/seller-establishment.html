@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Сведения о заведении')}"></head>
+<body><header th:replace="~{fragments :: header}"></header>
+<main class="page seller-page">
+  <div class="breadcrumbs"><a href="/">Главная</a><span>›</span><a href="/seller">Кабинет заведения</a><span>›</span><b>Сведения о заведении</b></div>
+  <div class="page-heading"><span class="badge green">Кабинет заведения</span><h1>Сведения о заведении</h1><p>Название, адрес, контакты и часы работы для покупателей</p></div>
+  <form class="seller-form" data-establishment-form th:if="${place != null}" enctype="multipart/form-data">
+    <div class="form-columns">
+      <section class="panel">
+        <div class="panel-heading"><div><h2>Основная информация</h2><p>Отображается на карточках наборов</p></div></div>
+        <div class="logo-row">
+          <div class="store-icon large"><img id="logo-preview" th:src="${place.logoId != null ? '/api/seller/images/' + place.logoId : '/assets/s2-imgContainer15.svg'}" alt="Логотип заведения"></div>
+          <div><label for="logo">Логотип или фото</label><input id="logo" name="logo" type="file" accept="image/jpeg,image/png" data-preview="#logo-preview"><small>JPG или PNG, не больше 5 МБ.</small>
+            <label class="checkbox" th:if="${place.logoId != null}"><input type="checkbox" name="removeLogo" value="true"> Удалить текущий логотип</label></div>
+        </div>
+        <label for="name">Название заведения <span class="required">*</span></label><input id="name" name="name" required maxlength="160" th:value="${place.name}">
+        <label for="type">Тип заведения <span class="required">*</span></label>
+        <select id="type" name="type" required><option value="">Выберите тип</option><option th:each="t : ${types}" th:value="${t}" th:text="${t}" th:selected="${t == place.type}"></option></select>
+        <label for="description">Описание для покупателей</label><textarea id="description" name="description" maxlength="1000" rows="4" placeholder="Например: свежая тандырная выпечка, печём каждый день с 08:00" th:text="${place.description}"></textarea>
+      </section>
+      <section class="panel">
+        <div class="panel-heading"><div><h2>Контакты и часы работы</h2><p>Нужны покупателю, чтобы забрать заказ</p></div></div>
+        <label for="address">Адрес <span class="required">*</span></label><input id="address" name="address" required maxlength="300" th:value="${place.address}">
+        <label for="phone">Телефон <span class="required">*</span></label><input id="phone" name="phone" type="tel" required maxlength="25" pattern="\+?[0-9 \x28\x29\x2d]{7,25}" placeholder="+996 555 123 456" th:value="${place.phone}">
+        <label for="openingHours">Часы работы <span class="required">*</span></label><input id="openingHours" name="openingHours" required maxlength="100" placeholder="Ежедневно 08:00–22:00" th:value="${place.openingHours}">
+        <p class="info">Окно выдачи задаётся отдельно в каждом предложении.</p>
+      </section>
+    </div>
+    <div class="form-error" role="alert" hidden></div>
+    <div class="form-actions"><button class="primary" type="submit">Сохранить изменения</button><a class="secondary" href="/seller">Отмена</a></div>
+  </form>
+  <div class="notice" th:if="${place == null}">Заведение не найдено. Обратитесь к администратору.</div>
+</main><footer th:replace="~{fragments :: footer}"></footer><nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
+<script type="module" th:src="@{/js/seller.js}"></script>
+</body></html>
