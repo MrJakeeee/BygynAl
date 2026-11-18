@@ -22,7 +22,9 @@ document.querySelectorAll('[data-close-dialog]').forEach(b=>b.addEventListener('
 document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
 document.querySelectorAll('.category-tabs input').forEach(input=>input.addEventListener('change',()=>input.form.requestSubmit()));
 document.querySelector('[data-clear-search]')?.addEventListener('click',e=>{const form=e.target.closest('form');form.elements.q.value='';form.requestSubmit();});
-document.querySelectorAll('[data-offer-details]').forEach(b=>b.addEventListener('click',()=>{document.querySelector('#offer-title').textContent=b.dataset.title;document.querySelector('#offer-composition').textContent=b.dataset.composition;document.querySelector('#offer-dialog').showModal();}));
+const offerQuantity=document.querySelector('[data-offer-quantity]');
+offerQuantity?.addEventListener('input',()=>{const quantity=Math.max(1,Math.min(Number(offerQuantity.max)||1,Number(offerQuantity.value)||1));const total=quantity*Number(document.querySelector('[data-offer-total]').dataset.price);document.querySelector('[data-offer-total]').textContent=total.toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2})+' сом';});
+document.querySelector('[data-reserve-offer]')?.addEventListener('click',()=>toast('Онлайн-оплата и бронирование пока недоступны'));
 
 // Sensitive profile changes use the existing challenge API and never persist credentials.
 let challenge=null,accountAction=null,enabled=false;
@@ -30,7 +32,7 @@ const accountDialog=document.querySelector('#account-dialog');
 document.querySelectorAll('[data-account-action]').forEach(b=>b.addEventListener('click',()=>{
   challenge=null;accountAction=b.dataset.accountAction;enabled=b.dataset.enabled==='true';
   document.querySelector('#account-dialog-title').textContent=accountAction==='email'?'Изменить электронную почту':enabled?'Включить двухфакторную защиту':'Отключить двухфакторную защиту';
-  document.querySelector('#account-dialog-fields').innerHTML=(accountAction==='email'?'<label for="change-email">Новый Gmail</label><input id="change-email" name="email" type="email" required autocomplete="email" maxlength="254">':'')+'<label for="change-password">Текущий пароль</label><input id="change-password" name="password" type="password" required autocomplete="current-password" maxlength="72">';
+  document.querySelector('#account-dialog-fields').innerHTML=(accountAction==='email'?'<label for="change-email">Новая электронная почта</label><input id="change-email" name="email" type="email" required autocomplete="email" maxlength="254">':'')+'<label for="change-password">Текущий пароль</label><input id="change-password" name="password" type="password" required autocomplete="current-password" maxlength="72">';
   const form=document.querySelector('#account-dialog-form');form.querySelector('.form-error').hidden=true;form.querySelector('[type=submit]').textContent='Получить код';accountDialog.showModal();
 }));
 document.querySelector('#account-dialog-form')?.addEventListener('submit',e=>{e.preventDefault();submit(e.target,async()=>{
@@ -49,7 +51,7 @@ document.querySelectorAll('[data-admin-create]').forEach(b=>b.addEventListener('
   try{
     if(createAction==='establishment'){document.querySelector('#create-title').textContent='Новое заведение';html=input('name','Название','text','maxlength="160"')+input('address','Адрес','text','maxlength="300"');}
     else{const places=await api('/admin/establishments');if(!places.length){toast('Сначала создайте заведение');document.querySelector('#establishments').scrollIntoView();return;}
-      document.querySelector('#create-title').textContent='Новый сотрудник';html=input('name','Имя','text','maxlength="100"')+input('email','Gmail','email','maxlength="254"')+input('phone','Телефон','tel','maxlength="25" pattern="\\+?[0-9 ()\\-]{7,25}"')+'<label for="create-establishment">Заведение</label><select id="create-establishment" name="establishmentId" required>'+places.map(p=>'<option value="'+safe(p.id)+'">'+safe(p.name)+'</option>').join('')+'</select><p class="dialog-description">Временный пароль отправим на e-mail сотрудника. При первом входе его нужно сменить.</p>';
+      document.querySelector('#create-title').textContent='Новый сотрудник';html=input('name','Имя','text','maxlength="100"')+input('email','Электронная почта','email','maxlength="254"')+input('phone','Телефон','tel','maxlength="25" pattern="\\+?[0-9 ()\\-]{7,25}"')+'<label for="create-establishment">Заведение</label><select id="create-establishment" name="establishmentId" required>'+places.map(p=>'<option value="'+safe(p.id)+'">'+safe(p.name)+'</option>').join('')+'</select><p class="dialog-description">Временный пароль отправим на e-mail сотрудника. При первом входе его нужно сменить.</p>';
     }
     document.querySelector('#create-fields').innerHTML=html;document.querySelector('#create-form .form-error').hidden=true;createDialog.showModal();
   }catch(e){toast(e.message);}

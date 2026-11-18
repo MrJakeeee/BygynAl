@@ -23,8 +23,9 @@
         <div class="panel-heading"><div><h2>Контакты и часы работы</h2><p>Нужны покупателю, чтобы забрать заказ</p></div></div>
         <label for="address">Адрес <span class="required">*</span></label><input id="address" name="address" required maxlength="300" th:value="${place.address}">
         <label for="phone">Телефон <span class="required">*</span></label><input id="phone" name="phone" type="tel" required maxlength="25" pattern="\+?[0-9 \x28\x29\x2d]{7,25}" placeholder="+996 555 123 456" th:value="${place.phone}">
-        <label for="openingHours">Часы работы <span class="required">*</span></label><input id="openingHours" name="openingHours" required maxlength="100" placeholder="Ежедневно 08:00–22:00" th:value="${place.openingHours}">
-        <p class="info">Окно выдачи задаётся отдельно в каждом предложении.</p>
+        <label>Часы работы <span class="required">*</span></label>
+        <div class="opening-hours-range"><label for="openingStart">Открытие</label><input id="openingStart" name="openingStart" type="time" required step="60" th:value="${openingStart}"><span aria-hidden="true">—</span><label for="openingEnd">Закрытие</label><input id="openingEnd" name="openingEnd" type="time" required step="60" th:value="${openingEnd}"></div>
+        <p class="info">Выберите время открытия и закрытия. Двоеточие в формате времени добавляется автоматически. Окно выдачи задаётся отдельно в каждом предложении.</p>
       </section>
     </div>
     <div class="form-error" role="alert" hidden></div>

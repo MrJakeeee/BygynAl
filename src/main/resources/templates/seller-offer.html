@@ -2,12 +2,12 @@
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head(${offer == null ? 'Новое предложение' : 'Изменение предложения'})}"></head>
 <body><header th:replace="~{fragments :: header}"></header>
-<main class="page seller-page" th:with="locked=${offer != null and offer.priceAndTimeLocked()}">
+<main class="page seller-page" th:with="locked=${offer != null and offer.priceAndDateLocked()}">
   <div class="breadcrumbs"><a href="/">Главная</a><span>›</span><a href="/seller">Кабинет заведения</a><span>›</span><b th:text="${offer == null ? 'Новое предложение' : 'Изменение предложения'}"></b></div>
   <div class="page-heading"><span class="badge green" th:text="${offer == null ? 'Создание набора' : 'Статус: ' + offer.status.title}"></span>
     <h1 th:text="${offer == null ? 'Новое предложение' : offer.title}"></h1>
     <p>Предложение появится на витрине сразу после публикации. Состав набора покупатель видит заранее.</p></div>
-  <div class="notice" th:if="${locked}" th:text="'Уже продано порций: ' + ${offer.sold()} + '. Цену и время выдачи изменить нельзя; количество порций можно только увеличить или уменьшить не ниже проданного.'"></div>
+  <div class="notice" th:if="${locked}" th:text="'Уже продано порций: ' + ${offer.sold()} + '. Цену и дату выдачи изменить нельзя; количество порций можно менять только не ниже проданного.'"></div>
   <form class="seller-form" data-offer-form th:attr="data-offer-id=${offer == null ? '' : offer.id}" enctype="multipart/form-data">
     <div class="form-columns">
       <div>
@@ -35,13 +35,8 @@
           <small th:if="${offer != null}" th:text="'Продано: ' + ${offer.sold()} + ', осталось: ' + ${offer.remaining}"></small>
         </section>
         <section class="panel">
-          <div class="panel-heading"><div><h2>4. Окно выдачи</h2><p>Бишкек (UTC+6), от 30 минут до 4 часов</p></div></div>
+          <div class="panel-heading"><div><h2>4. Дата выдачи</h2><p>Выберите день, когда набор будет доступен покупателям</p></div></div>
           <label for="pickupDate">Дата выдачи <span class="required">*</span></label><input id="pickupDate" name="pickupDate" type="date" required th:value="${offer != null ? offer.pickupDate : today}" th:readonly="${locked}">
-          <div class="two-fields">
-            <div><label for="pickupStart">Начало <span class="required">*</span></label><input id="pickupStart" name="pickupStart" type="time" required th:value="${offer != null ? #temporals.format(offer.pickupStart, 'HH:mm') : '19:00'}" th:readonly="${locked}"></div>
-            <div><label for="pickupEnd">Конец <span class="required">*</span></label><input id="pickupEnd" name="pickupEnd" type="time" required th:value="${offer != null ? #temporals.format(offer.pickupEnd, 'HH:mm') : '21:00'}" th:readonly="${locked}"></div>
-          </div>
-          <p class="info">Начало выдачи — не раньше чем через 30 минут после публикации.</p>
         </section>
       </div>
     </div>

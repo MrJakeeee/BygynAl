@@ -22,7 +22,7 @@ public class SecurityConfig {
     @Bean SecurityFilterChain security(HttpSecurity http,Users users,SecurityContextRepository repo) throws Exception {
         return http.cors(c->{}).securityContext(c->c.securityContextRepository(repo))
             .authorizeHttpRequests(a->a
-                .requestMatchers("/", "/catalog", "/login", "/register", "/forgot", "/assets/**", "/css/**", "/js/**", "/api/auth/**", "/api/catalog", "/api/catalog/**", "/error").permitAll()
+                .requestMatchers("/", "/catalog", "/catalog/**", "/offers/**", "/login", "/register", "/forgot", "/assets/**", "/css/**", "/js/**", "/api/auth/**", "/api/catalog", "/api/catalog/**", "/error").permitAll()
                 .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
                 .requestMatchers("/seller", "/seller/**").hasRole("SELLER")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

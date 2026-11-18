@@ -29,7 +29,7 @@
     <article class="offer-card" th:each="offer : ${offers}">
       <div class="offer-photo"><img th:src="${offer.imageUrl != null ? offer.imageUrl : '/assets/s0-img.png'}" th:alt="${offer.title}"><span class="discount" th:text="'−' + ${offer.discount()} + '%'"></span><span class="stock" th:classappend="${offer.remaining == 1 ? 'urgent' : ''}" th:text="'● Осталось ' + ${offer.remaining}"></span></div>
       <div class="offer-body"><small class="place-name" th:text="${offer.place}"></small><h3 th:text="${offer.title}"></h3><p class="pickup"><img src="/assets/s0-imgContainer10.svg" alt=""><span th:text="${offer.pickupDate == today ? 'Сегодня ' + offer.start + '–' + offer.end : #temporals.format(offer.pickupDate, 'dd.MM') + ' ' + offer.start + '–' + offer.end}"></span></p>
-        <div class="offer-bottom"><div><strong th:text="${offer.price} + ' сом'"></strong><del th:text="${offer.original} + ' сом'"></del></div><button class="primary" data-offer-details th:attr="data-title=${offer.title},data-composition=${offer.composition}">Подробнее <span>↗</span></button></div>
+        <div class="offer-bottom"><div><strong th:text="${offer.price} + ' сом'"></strong><del th:text="${offer.original} + ' сом'"></del></div><a class="primary" th:href="@{/offers/{id}(id=${offer.id})}">Подробнее <span>↗</span></a></div>
       </div>
     </article>
   </div>
@@ -37,5 +37,4 @@
   <section class="rules" id="rules"><h2>Удобно вам. Полезно городу.</h2><div class="rules-grid"><div><b>01</b><h3>Выберите набор</h3><p>Состав, цена и время самовывоза известны заранее.</p></div><div><b>02</b><h3>Оплатите за 3 минуты</h3><p>Порция закрепляется за вами на время оплаты.</p></div><div><b>03</b><h3>Заберите по коду</h3><p>Отмена с возвратом — до начала выдачи. За неполученный заказ деньги автоматически не возвращаются.</p></div></div></section>
 </main>
 <footer th:replace="~{fragments :: footer}"></footer><nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
-<dialog id="offer-dialog"><button class="dialog-close" data-close-dialog aria-label="Закрыть">×</button><span class="badge">Предложение</span><h2 id="offer-title"></h2><p id="offer-composition"></p><p class="notice">Заказ и оплата появятся после подключения соответствующих функций.</p><button class="primary" data-close-dialog>Понятно</button></dialog>
 </body></html>

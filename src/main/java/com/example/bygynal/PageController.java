@@ -46,6 +46,13 @@ public class PageController {
         model.addAttribute("min",min); model.addAttribute("max",max); model.addAttribute("until",until); model.addAttribute("sort",sort);
         return "home";
     }
+    @GetMapping({"/offers/{id}", "/catalog/{id}"})
+    String offerDetails(@PathVariable UUID id, Model model) {
+        CatalogService.Offer offer = catalog.findById(id);
+        if (offer == null) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
+        model.addAttribute("offer", offer);
+        return "offer-details";
+    }
     @GetMapping({"/login", "/register", "/forgot"})
     String login(Model model, jakarta.servlet.http.HttpServletRequest request) {
         model.addAttribute("authPage", request.getRequestURI().substring(1)); return "auth";
@@ -64,14 +71,36 @@ public class PageController {
     }
     @GetMapping("/seller/establishment") String establishment(Model model, Authentication authentication) {
         UUID placeId=placeId(authentication);
-        model.addAttribute("place",placeId==null ? null : establishments.find(placeId).orElse(null));
+        var place=placeId==null ? null : establishments.find(placeId).orElse(null);
+        model.addAttribute("place",place);
+        String[] hours=splitOpeningHours(place==null ? null : place.openingHours());
+        model.addAttribute("openingStart",hours[0]); model.addAttribute("openingEnd",hours[1]);
         model.addAttribute("types",Establishments.TYPES);
         return "seller-establishment";
     }
-    @GetMapping("/seller/offers/new") String newOffer(Model model) {model.addAttribute("offer",null); return "seller-offer";}
+    private String[] splitOpeningHours(String value) {
+        String[] result={"", ""};
+        if(value==null) return result;
+        var matcher=java.util.regex.Pattern.compile("(?<!\\d)(\\d{1,2}):?(\\d{2})(?!\\d)").matcher(value);
+        if(!matcher.find()) return result;
+        int firstHour=Integer.parseInt(matcher.group(1)), firstMinute=Integer.parseInt(matcher.group(2));
+        if(firstHour>23||firstMinute>59) return result;
+        result[0]=String.format(java.util.Locale.ROOT,"%02d:%02d",firstHour,firstMinute);
+        if(matcher.find()) {
+            int secondHour=Integer.parseInt(matcher.group(1)), secondMinute=Integer.parseInt(matcher.group(2));
+            if(secondHour<=23&&secondMinute<=59) result[1]=String.format(java.util.Locale.ROOT,"%02d:%02d",secondHour,secondMinute);
+        }
+        return result;
+    }
+    @GetMapping("/seller/offers/new") String newOffer(Model model, Authentication authentication) {
+        UUID id=placeId(authentication); model.addAttribute("offer",null);
+        model.addAttribute("place",id==null ? null : establishments.find(id).orElse(null)); return "seller-offer";
+    }
     @GetMapping("/seller/offers/{id}") String editOffer(Model model, Authentication authentication, @PathVariable UUID id) {
         try {model.addAttribute("offer",offers.get(placeId(authentication),id));}
         catch(ApiError e) {throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);}
+        UUID establishmentId=placeId(authentication);
+        model.addAttribute("place",establishmentId==null ? null : establishments.find(establishmentId).orElse(null));
         return "seller-offer";
     }
     @GetMapping("/admin") String admin(Model model, @RequestParam(defaultValue="") String q,

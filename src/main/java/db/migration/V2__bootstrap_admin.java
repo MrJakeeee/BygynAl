@@ -20,7 +20,7 @@ public class V2__bootstrap_admin extends BaseJavaMigration {
         }
         if (email == null || password == null || password.length() < 12
                 || !password.matches("(?s)(?=.*[A-Za-z])(?=.*[0-9]).*")) {
-            throw new FlywayException("Set a Gmail ADMIN_EMAIL and an ADMIN_PASSWORD of at least 12 characters with letters and digits");
+            throw new FlywayException("Set a valid ADMIN_EMAIL and an ADMIN_PASSWORD of at least 12 characters with letters and digits");
         }
 
         try (PreparedStatement exists = context.getConnection()
@@ -50,9 +50,9 @@ public class V2__bootstrap_admin extends BaseJavaMigration {
             return null;
         }
         String email = value.trim().toLowerCase(Locale.ROOT);
-        if (!email.matches("[a-z0-9][a-z0-9.]{0,63}@gmail\\.com")) {
-            return null;
-        }
-        return email.substring(0, email.indexOf('@')).replace(".", "") + "@gmail.com";
+        if (!email.matches("[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+") || email.length() > 254) return null;
+        String local=email.substring(0,email.indexOf('@'));
+        if(local.length()>64 || local.startsWith(".") || local.endsWith(".") || local.contains("..")) return null;
+        return email.endsWith("@gmail.com") ? local.replace(".", "") + "@gmail.com" : email;
     }
 }

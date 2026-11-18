@@ -28,11 +28,15 @@ public class AuthService {
         this.users=users; this.challenges=challenges; this.encoder=encoder; this.mail=mail; this.jdbc=jdbc;
     }
     static String email(String value) {
-        String result=value.trim().toLowerCase(Locale.ROOT);
-        if (!result.matches("[a-z0-9][a-z0-9.]{0,63}@gmail\\.com"))
-            throw new ApiError(400,"Используйте адрес @gmail.com");
-        // Gmail ignores dots in the local part. One mailbox must have one account.
-        return result.substring(0,result.indexOf('@')).replace(".","")+"@gmail.com";
+        String result=value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        if (result.length()>254 || !result.matches("[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+"))
+            throw new ApiError(400,"Укажите корректный адрес электронной почты");
+        String local=result.substring(0,result.indexOf('@'));
+        if(local.length()>64 || local.startsWith(".") || local.endsWith(".") || local.contains(".."))
+            throw new ApiError(400,"Укажите корректный адрес электронной почты");
+        // Keep the existing Gmail alias handling; other domains are stored as entered.
+        if(result.endsWith("@gmail.com")) return local.replace(".","")+"@gmail.com";
+        return result;
     }
     String hashPassword(String value) {
         if(value.getBytes(StandardCharsets.UTF_8).length>72) throw new ApiError(400,"Пароль должен занимать не более 72 байт UTF-8");
@@ -171,7 +175,7 @@ public class AuthService {
         if(users.findByEmail(c.email).isPresent()) throw new ApiError(409,"Этот e-mail уже используется");
         u.email=c.email; u.sessionVersion++;
     }
-    static Map<String,Object> challengeResponse(Challenge c) { return Map.of("challengeId",c.id,"expiresAt",c.expiresAt,"message","Код отправлен на Gmail"); }
+    static Map<String,Object> challengeResponse(Challenge c) { return Map.of("challengeId",c.id,"expiresAt",c.expiresAt,"message","Код отправлен на электронную почту"); }
     static Map<String,Object> view(UserAccount u) {
         Map<String,Object> v=new LinkedHashMap<>();
         v.put("id",u.id); v.put("name",u.name); v.put("email",u.email); v.put("phone",u.phone); v.put("role",u.role);
