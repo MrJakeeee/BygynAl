@@ -55,7 +55,9 @@ public class V3__align_bootstrap_admin extends BaseJavaMigration {
     private String normalizeEmail(String value) {
         if (value == null || value.isBlank()) return null;
         String email = value.trim().toLowerCase(Locale.ROOT);
-        if (!email.matches("[a-z0-9][a-z0-9.]{0,63}@gmail\\.com")) return null;
-        return email.substring(0, email.indexOf('@')).replace(".", "") + "@gmail.com";
+        if (!email.matches("[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+") || email.length() > 254) return null;
+        String local=email.substring(0,email.indexOf('@'));
+        if(local.length()>64 || local.startsWith(".") || local.endsWith(".") || local.contains("..")) return null;
+        return email.endsWith("@gmail.com") ? local.replace(".", "") + "@gmail.com" : email;
     }
 }

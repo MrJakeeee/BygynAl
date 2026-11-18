@@ -51,7 +51,13 @@ public class Establishments {
         if (type == null || !TYPES.contains(type)) throw new ApiError(400, "Выберите тип заведения");
         String phone = trim(f.phone());
         if (phone == null || !phone.matches("\\+?[0-9 ()-]{7,25}")) throw new ApiError(400, "Укажите корректный телефон");
-        String hours = required(f.openingHours(), 100, "Укажите часы работы", "Часы работы — не длиннее 100 символов");
+        String hours = required(f.openingHours(), 100, "Укажите время открытия и закрытия", "Часы работы указаны некорректно");
+        if (!hours.matches("(?:[01]\\d|2[0-3]):[0-5]\\d–(?:[01]\\d|2[0-3]):[0-5]\\d"))
+            throw new ApiError(400, "Укажите время открытия и закрытия в формате ЧЧ:ММ");
+        String[] businessHours = hours.split("–");
+        java.time.LocalTime open = java.time.LocalTime.parse(businessHours[0]);
+        java.time.LocalTime close = java.time.LocalTime.parse(businessHours[1]);
+        if (!close.isAfter(open)) throw new ApiError(400, "Время закрытия должно быть позже времени открытия");
         String description = optional(f.description(), 1000, "Описание — не длиннее 1000 символов");
 
         UUID logoId = current.logoId();
@@ -60,6 +66,7 @@ public class Establishments {
 
         jdbc.update("update establishments set name = ?, place_type = ?, address = ?, phone = ?, opening_hours = ?, description = ?, logo_id = ? where id = ?",
             name, type, address, phone, hours, description, logoId, id);
+        jdbc.update("update offers set pickup_start = ?, pickup_end = ? where establishment_id = ?", open, close, id);
         // Старый логотип удаляем только после того, как заведение перестало на него ссылаться.
         if (current.logoId() != null && !current.logoId().equals(logoId)) images.delete(current.logoId());
     }

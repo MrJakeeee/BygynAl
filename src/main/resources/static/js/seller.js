@@ -31,7 +31,12 @@ document.querySelector('[data-establishment-form]')?.addEventListener('submit', 
   e.preventDefault();
   submit(e.target, async () => {
     checkPhotos(e.target.elements.logo);
-    await send('/seller/establishment', new FormData(e.target));
+    const data = new FormData(e.target);
+    const start = data.get('openingStart'), end = data.get('openingEnd');
+    if (!start || !end) throw Error('Укажите время открытия и закрытия');
+    if (start >= end) throw Error('Время закрытия должно быть позже времени открытия');
+    data.set('openingHours', start + '–' + end);
+    await send('/seller/establishment', data);
     location.href = '/seller';
   });
 });

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${offer.title})}"></head>
+<body class="offer-page-body">
+<main class="offer-page">
+  <a class="offer-back" href="/">← Каталог предложений</a>
+  <div class="offer-page-grid">
+    <div class="offer-page-left">
+      <div class="offer-hero-photo"><img th:src="${offer.imageUrl != null ? offer.imageUrl : '/assets/s0-img.png'}" th:alt="${offer.title}"></div>
+      <section class="how-to-card">
+        <h2>Как получить набор</h2>
+        <div class="how-to-grid">
+          <article><span>01</span><h3>Выберите набор</h3><p>Посмотрите состав и доступное количество порций.</p></article>
+          <article><span>02</span><h3>Проверьте время</h3><p>У каждого набора своё окно самовывоза.</p></article>
+          <article><span>03</span><h3>Заберите в заведении</h3><p>Адрес и время получения указаны в карточке.</p></article>
+        </div>
+      </section>
+      <aside class="offer-green-note"><h3>Хорошей еде — второй шанс</h3><p>Выбирая оставшуюся еду, вы помогаете уменьшать пищевые отходы в Бишкеке.</p></aside>
+    </div>
+    <section class="offer-purchase-card">
+      <span class="badge green" th:text="${offer.type != null ? offer.type : 'Предложение'}"></span>
+      <small class="offer-seller-name" th:text="${offer.place}"></small>
+      <h1 th:text="${offer.title}"></h1>
+      <div class="offer-price-box"><strong th:text="${offer.price} + ' сом'"></strong><del th:text="${offer.original} + ' сом'"></del></div>
+      <h2>Состав набора</h2><p th:text="${offer.composition}"></p>
+      <h2>Где и когда забрать</h2>
+      <p class="offer-address" th:text="${offer.place}"></p>
+      <p th:text="'Начало: ' + ${#temporals.format(offer.pickupDate, 'dd MMMM yyyy')} + ', ' + ${offer.start}"></p>
+      <p th:text="'Окончание: ' + ${#temporals.format(offer.pickupDate, 'dd MMMM yyyy')} + ', ' + ${offer.end}"></p>
+      <p>Время по Бишкеку (UTC+6). Самовывоз из заведения.</p>
+      <p th:if="${offer.allergens != null and !offer.allergens.isBlank()}" th:text="'Аллергены: ' + ${offer.allergens}"></p>
+      <p class="available-count" th:classappend="${offer.remaining == 0 or offer.pickupDate.isBefore(today)} ? 'sold-out' : ''"><span th:if="${offer.remaining > 0 and !offer.pickupDate.isBefore(today)}">Доступных порций: <b th:text="${offer.remaining}"></b></span><b th:if="${offer.remaining == 0}">Все порции разобрали</b><b th:if="${offer.remaining > 0 and offer.pickupDate.isBefore(today)}">Предложение завершено</b></p>
+      <label class="quantity-label" for="offer-quantity">Количество порций
+        <input id="offer-quantity" type="number" min="1" th:max="${offer.remaining}" value="1" data-offer-quantity>
+      </label>
+      <p class="offer-total">Итого: <strong data-offer-total th:attr="data-price=${offer.price}" th:text="${offer.price} + ' сом'"></strong></p>
+      <button class="primary reserve-button" type="button" data-reserve-offer th:disabled="${offer.remaining == 0 or offer.pickupDate.isBefore(today)}">Оплатить и забронировать</button>
+      <p class="reserve-caption">Бронь выбранных порций действует 3 минуты — за это время нужно оплатить заказ онлайн.</p>
+      <p class="reserve-caption" style="color:#9a5410">Онлайн-оплата и бронирование пока недоступны.</p>
+    </section>
+  </div>
+</main>
+<footer class="offer-page-footer"><div><a class="brand" href="/">Take<span>Today</span></a><small> · Кыргызстан, Бишкек</small><p>© 2026 TakeToday, Бишкек. Все права защищены.</p></div><nav><a href="/#rules">Как это работает</a><a href="/login">Заведениям и пекарням</a><a href="mailto:support@example.com">Контакты</a></nav><div class="offer-footer-bottom"><b>TakeToday Бизнес</b><span>— Платформа спасения еды для заведений Бишкека © 2026</span><nav><a href="/login">Поддержка партнёров</a><a href="/#rules">Как это работает</a></nav></div></footer>
+<nav th:replace="~{fragments :: mobile}"></nav><div th:replace="~{fragments :: toast}"></div>
+</body></html>

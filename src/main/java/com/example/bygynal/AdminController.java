@@ -36,7 +36,7 @@ public class AdminController {
         u.role="SELLER"; u.establishmentId=r.establishmentId(); u.mustChangePassword=true; u.passwordHash=auth.hashPassword(temporary);
         users.saveAndFlush(u);
         auth.send(email,"Учётная запись сотрудника","Администратор создал вашу учётную запись.\nЛогин: "+email+"\nВременный пароль: "+temporary+"\nПри первом входе обязательно смените пароль.");
-        audit(a,"CREATE_SELLER",u.id); return Map.of("id",u.id,"message","Сотрудник создан. Временный пароль отправлен на Gmail");
+        audit(a,"CREATE_SELLER",u.id); return Map.of("id",u.id,"message","Сотрудник создан. Временный пароль отправлен на электронную почту");
     }
     @PatchMapping("/users/{id}/block") Object block(Authentication a,@PathVariable UUID id,@Valid @RequestBody Requests.Block r) {
         if(id.equals(AuthController.id(a))) throw new ApiError(400,"Нельзя заблокировать себя");

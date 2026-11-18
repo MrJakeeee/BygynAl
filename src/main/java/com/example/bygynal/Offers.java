@@ -58,19 +58,19 @@ public class Offers {
                 .divide(originalPrice, 0, RoundingMode.DOWN).intValue();
         }
         public boolean editable() { return status == Status.ACTIVE || status == Status.SOLD_OUT; }
-        public boolean priceAndTimeLocked() { return sold() > 0; }
+        public boolean priceAndDateLocked() { return sold() > 0; }
     }
 
     // ---------- чтение ----------
 
     public List<View> forEstablishment(UUID establishmentId) {
-        return jdbc.query("select * from offers where establishment_id = ? order by pickup_date desc, pickup_start desc",
+        return jdbc.query("select o.*, e.opening_hours as establishment_hours from offers o join establishments e on e.id=o.establishment_id where o.establishment_id = ? order by o.pickup_date desc, o.pickup_start desc",
             mapper(), establishmentId);
     }
 
     /** Предложение своего заведения. Чужое — как будто его нет (404), чтобы не раскрывать чужие данные. */
     public View get(UUID establishmentId, UUID offerId) {
-        return jdbc.query("select * from offers where id = ? and establishment_id = ?", mapper(), offerId, establishmentId)
+        return jdbc.query("select o.*, e.opening_hours as establishment_hours from offers o join establishments e on e.id=o.establishment_id where o.id = ? and o.establishment_id = ?", mapper(), offerId, establishmentId)
             .stream().findFirst().orElseThrow(() -> new ApiError(404, "Предложение не найдено"));
     }
 
@@ -80,14 +80,16 @@ public class Offers {
             UUID id = rs.getObject("id", UUID.class);
             int remaining = rs.getInt("remaining");
             LocalDate date = rs.getObject("pickup_date", LocalDate.class);
-            LocalTime end = rs.getObject("pickup_end", LocalTime.class);
+            LocalTime[] hours = parseBusinessHours(rs.getString("establishment_hours"));
+            LocalTime start = hours == null ? rs.getObject("pickup_start", LocalTime.class) : hours[0];
+            LocalTime end = hours == null ? rs.getObject("pickup_end", LocalTime.class) : hours[1];
             Status status = rs.getBoolean("withdrawn") ? Status.WITHDRAWN
                 : !now.isBefore(LocalDateTime.of(date, end)) ? Status.FINISHED
                 : remaining == 0 ? Status.SOLD_OUT : Status.ACTIVE;
             return new View(id, rs.getObject("establishment_id", UUID.class), rs.getString("title"),
                 rs.getString("composition"), rs.getString("allergens"),
                 rs.getBigDecimal("original_price"), rs.getBigDecimal("price"),
-                rs.getInt("total_portions"), remaining, date, rs.getObject("pickup_start", LocalTime.class), end,
+                rs.getInt("total_portions"), remaining, date, start, end,
                 status, photoIds(id));
         };
     }
@@ -100,8 +102,9 @@ public class Offers {
 
     @Transactional
     public UUID create(UUID establishmentId, Form f, List<MultipartFile> photos) {
-        Checked c = check(f);
-        checkStartTime(c);
+        LocalTime[] hours = businessHours(establishmentId);
+        Checked c = check(f, hours[0], hours[1]);
+        checkPickupDate(c);
         List<MultipartFile> files = present(photos);
         if (files.isEmpty()) throw new ApiError(400, "Добавьте хотя бы одно фото набора");
         UUID id = UUID.randomUUID();
@@ -122,16 +125,17 @@ public class Offers {
         lock(establishmentId, offerId);
         View old = get(establishmentId, offerId);
         if (!old.editable()) throw new ApiError(409, "Снятое или завершённое предложение изменить нельзя");
-        Checked c = check(f);
+        LocalTime[] hours = businessHours(establishmentId);
+        Checked c = check(f, hours[0], hours[1]);
         int sold = old.sold();
         if (sold > 0) {
             // После первой продажи покупатели уже заплатили по этой цене и рассчитывают на это время.
             boolean changed = c.price.compareTo(old.price()) != 0 || c.originalPrice.compareTo(old.originalPrice()) != 0
-                || !c.date.equals(old.pickupDate()) || !c.start.equals(old.pickupStart()) || !c.end.equals(old.pickupEnd());
-            if (changed) throw new ApiError(409, "После первой продажи нельзя менять цену и время выдачи");
+                || !c.date.equals(old.pickupDate());
+            if (changed) throw new ApiError(409, "После первой продажи нельзя менять цену и дату выдачи");
             if (c.portions < sold) throw new ApiError(409, "Нельзя сделать порций меньше, чем уже продано: " + sold);
-        } else if (!c.date.equals(old.pickupDate()) || !c.start.equals(old.pickupStart())) {
-            checkStartTime(c);
+        } else if (!c.date.equals(old.pickupDate())) {
+            checkPickupDate(c);
         }
         jdbc.update("""
             update offers set title = ?, composition = ?, allergens = ?, original_price = ?, price = ?,
@@ -191,7 +195,7 @@ public class Offers {
     private record Checked(String title, String composition, String allergens, BigDecimal originalPrice,
                            BigDecimal price, int portions, LocalDate date, LocalTime start, LocalTime end) {}
 
-    private Checked check(Form f) {
+    private Checked check(Form f, LocalTime start, LocalTime end) {
         String title = Establishments.required(f.title(), 120, "Укажите название набора", "Название — не длиннее 120 символов");
         String composition = Establishments.required(f.composition(), 1000, "Укажите состав набора", "Состав — не длиннее 1000 символов");
         String allergens = Establishments.optional(f.allergens(), 300, "Аллергены — не длиннее 300 символов");
@@ -202,23 +206,37 @@ public class Offers {
         try { portions = Integer.parseInt(Objects.requireNonNullElse(f.portions(), "").trim()); }
         catch (NumberFormatException e) { throw new ApiError(400, "Укажите количество порций числом"); }
         if (portions < 1 || portions > 100) throw new ApiError(400, "Количество порций — от 1 до 100");
-        LocalDate date; LocalTime start, end;
+        LocalDate date;
         try {
             date = LocalDate.parse(Objects.requireNonNullElse(f.pickupDate(), "").trim());
-            start = LocalTime.parse(Objects.requireNonNullElse(f.pickupStart(), "").trim());
-            end = LocalTime.parse(Objects.requireNonNullElse(f.pickupEnd(), "").trim());
-        } catch (DateTimeParseException e) { throw new ApiError(400, "Укажите дату и время выдачи"); }
-        // Окно выдачи — в пределах одного дня, от 30 минут до 4 часов (ТЗ 4.4.3).
-        if (!end.isAfter(start)) throw new ApiError(400, "Конец выдачи должен быть позже начала в тот же день");
-        long minutes = Duration.between(start, end).toMinutes();
-        if (minutes < 30 || minutes > 240) throw new ApiError(400, "Окно выдачи — от 30 минут до 4 часов");
+        } catch (DateTimeParseException e) { throw new ApiError(400, "Укажите дату выдачи"); }
         return new Checked(title, composition, allergens, original, price, portions, date, start, end);
     }
 
-    /** Начало выдачи — не раньше чем через 30 минут после размещения (ТЗ 4.4.3). */
-    private void checkStartTime(Checked c) {
-        if (LocalDateTime.of(c.date, c.start).isBefore(LocalDateTime.now(clock).plusMinutes(30)))
-            throw new ApiError(400, "Начало выдачи — не раньше чем через 30 минут");
+    /** Создание разрешено, если магазин не закрывается в ближайшие 30 минут. */
+    private void checkPickupDate(Checked c) {
+        if (LocalDateTime.of(c.date, c.end).isBefore(LocalDateTime.now(clock).plusMinutes(30)))
+            throw new ApiError(400, "Выберите дату, когда заведение будет открыто ещё хотя бы 30 минут");
+    }
+
+    private LocalTime[] businessHours(UUID establishmentId) {
+        String value=jdbc.query("select opening_hours from establishments where id=?", rs -> rs.next() ? rs.getString(1) : null, establishmentId);
+        LocalTime[] hours=parseBusinessHours(value);
+        if(hours==null) throw new ApiError(400,"Сначала укажите часы работы в настройках заведения");
+        return hours;
+    }
+
+    private static LocalTime[] parseBusinessHours(String value) {
+        if(value==null) return null;
+        var matcher=java.util.regex.Pattern.compile("(?<!\\d)(\\d{1,2}):?(\\d{2})(?!\\d)").matcher(value);
+        if(!matcher.find()) return null;
+        String start=String.format(Locale.ROOT,"%02d:%02d",Integer.parseInt(matcher.group(1)),Integer.parseInt(matcher.group(2)));
+        if(!matcher.find()) return null;
+        String end=String.format(Locale.ROOT,"%02d:%02d",Integer.parseInt(matcher.group(1)),Integer.parseInt(matcher.group(2)));
+        try {
+            LocalTime open=LocalTime.parse(start), close=LocalTime.parse(end);
+            return close.isAfter(open) ? new LocalTime[]{open,close} : null;
+        } catch(DateTimeParseException e) { return null; }
     }
 
     /** Сумма в сомах: больше нуля, не больше двух знаков после запятой. Запятую тоже принимаем. */
